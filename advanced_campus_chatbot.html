@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampusBot AI - Your Smart Campus Assistant</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --accent-color: #00ff88;
+            --shadow-light: 0 4px 20px rgba(0,0,0,0.08);
+            --shadow-heavy: 0 20px 60px rgba(0,0,0,0.15);
+            --border-radius: 16px;
+            --animation-speed: 0.3s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 900px;
+            height: 85vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: var(--shadow-heavy);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header {
+            background: var(--secondary-gradient);
+            color: white;
+            padding: 24px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .bot-avatar {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .header-text h1 {
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .header-text p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .status-panel {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .users-online {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+        }
+
+        .messages-container {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            animation: slideInUp var(--animation-speed) ease-out;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .message.bot .message-avatar {
+            background: var(--secondary-gradient);
+            color: white;
+        }
+
+        .message.user .message-avatar {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .message-content {
+            max-width: 65%;
+            padding: 16px 20px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #1a202c;
+            box-shadow: var(--shadow-light);
+            border: 1px solid #e2e8f0;
+        }
+
+        .message.user .message-content {
+            background: var(--secondary-gradient);
+            color: white;
+            text-align: right;
+        }
+
+        .message-time {
+            font-size: 0.75em;
+            opacity: 0.6;
+            margin-top: 8px;
+        }
+
+        .typing-indicator {
+            display: none;
+            margin-bottom: 20px;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .typing-content {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 18px;
+            box-shadow: var(--shadow-light);
+            border: 1px solid #e2e8f0;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #94a3b8;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+
+        .input-area {
+            padding: 24px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .suggestions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .suggestion-chip {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all var(--animation-speed);
+            white-space: nowrap;
+        }
+
+        .suggestion-chip:hover {
+            background: var(--secondary-gradient);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-light);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .input-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 14px 20px 14px 48px;
+            border: 2px solid #e2e8f0;
+            border-radius: 24px;
+            outline: none;
+            font-size: 15px;
+            line-height: 1.4;
+            transition: border-color var(--animation-speed);
+            resize: none;
+            min-height: 48px;
+            max-height: 120px;
+        }
+
+        .chat-input:focus {
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 18px;
+        }
+
+        .send-button {
+            padding: 12px 20px;
+            background: var(--secondary-gradient);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all var(--animation-speed);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 80px;
+            justify-content: center;
+        }
+
+        .send-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-light);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, #e0f2fe 0%, #f3e5f5 100%);
+            border-left: 4px solid #00bcd4;
+            padding: 16px;
+            margin: 12px 0;
+            border-radius: 0 12px 12px 0;
+            box-shadow: var(--shadow-light);
+        }
+
+        .info-card h4 {
+            color: #006064;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .info-card p {
+            color: #37474f;
+            line-height: 1.4;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
+            border: 1px solid #e2e8f0;
+            transition: transform var(--animation-speed);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1a202c;
+        }
+
+        .feature-description {
+            color: #64748b;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .quick-stats {
+            display: flex;
+            gap: 16px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
+            text-align: center;
+            min-width: 120px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-number {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #4facfe;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .header {
+                padding: 16px 20px;
+            }
+            
+            .messages-container {
+                padding: 16px;
+            }
+            
+            .input-area {
+                padding: 16px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="header-content">
+                <div class="bot-avatar">🎓</div>
+                <div class="header-text">
+                    <h1>CampusBot AI</h1>
+                    <p>Your intelligent campus assistant</p>
+                </div>
+            </div>
+            <div class="status-panel">
+                <div class="status-indicator"></div>
+                <div class="users-online">Online</div>
+            </div>
+        </div>
+
+        <div class="chat-area">
+            <div class="messages-container" id="messagesContainer">
+                <div class="message bot">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        <strong>Welcome to CampusBot AI! 🎉</strong><br><br>
+                        I'm your intelligent campus assistant, powered by advanced AI to help you navigate campus life. I can assist you with:
+                        
+                        <div class="feature-grid">
+                            <div class="feature-card">
+                                <div class="feature-icon">📅</div>
+                                <div class="feature-title">Schedules & Events</div>
+                                <div class="feature-description">Class schedules, campus events, important dates, and deadlines</div>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">🏢</div>
+                                <div class="feature-title">Campus Facilities</div>
+                                <div class="feature-description">Building locations, room bookings, lab access, and facility hours</div>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">🍽️</div>
+                                <div class="feature-title">Dining Services</div>
+                                <div class="feature-description">Meal plans, restaurant hours, menus, and dietary accommodations</div>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">📚</div>
+                                <div class="feature-title">Library Services</div>
+                                <div class="feature-description">Study spaces, research help, book reservations, and digital resources</div>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">📋</div>
+                                <div class="feature-title">Administrative</div>
+                                <div class="feature-description">Registration, transcripts, financial aid, and academic procedures</div>
+                            </div>
+                            <div class="feature-card">
+                                <div class="feature-icon">🎯</div>
+                                <div class="feature-title">Student Support</div>
+                                <div class="feature-description">Counseling, career services, tutoring, and wellness programs</div>
+                            </div>
+                        </div>
+                        
+                        Just ask me anything about campus life! I understand natural language and can provide detailed, personalized assistance.
+                        <div class="message-time" id="welcomeTime"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="message-avatar">🤖</div>
+                <div class="typing-content">
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="suggestions" id="suggestions">
+                <div class="suggestion-chip" onclick="sendSuggestion('What are the library hours today?')">📚 Library Hours</div>
+                <div class="suggestion-chip" onclick="sendSuggestion('Show me dining options on campus')">🍕 Dining Options</div>
+                <div class="suggestion-chip" onclick="sendSuggestion('How do I register for classes?')">📝 Registration</div>
+                <div class="suggestion-chip" onclick="sendSuggestion('Where can I find study spaces?')">📖 Study Spaces</div>
+                <div class="suggestion-chip" onclick="sendSuggestion('What events are happening this week?')">🎭 Events</div>
+            </div>
+            
+            <div class="input-wrapper">
+                <div class="input-container">
+                    <div class="input-icon">💬</div>
+                    <textarea 
+                        class="chat-input" 
+                        id="chatInput" 
+                        placeholder="Ask me anything about campus..."
+                        rows="1"
+                        onkeydown="handleKeyDown(event)"
+                        oninput="autoResize(this)"
+                    ></textarea>
+                </div>
+                <button class="send-button" onclick="sendMessage()" id="sendButton">
+                    <span>Send</span>
+                    <span>📤</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Advanced Campus Database
+        const campusDatabase = {
+            schedules: {
+                academic: {
+                    fallSemester: {
+                        start: "August 28, 2023",
+                        end: "December 15, 2023",
+                        finals: "December 11-15, 2023",
+                        addDrop: "August 28 - September 8",
+                        withdrawal: "October 30"
+                    },
+                    springSemester: {
+                        start: "January 15, 2024",
+                        end: "May 10, 2024",
+                        finals: "May 6-10, 2024",
+                        addDrop: "January 15-26",
+                        withdrawal: "March 25"
+                    },
+                    summerSessions: {
+                        session1: "May 20 - June 28",
+                        session2: "July 1 - August 9",
+                        intensive: "May 20 - August 9"
+                    }
+                },
+                library: {
+                    regular: {
+                        weekdays: "7:00 AM - 11:00 PM",
+                        saturday: "9:00 AM - 9:00 PM",
+                        sunday: "10:00 AM - 10:00 PM"
+                    },
+                    finals: "24/7 access during finals week",
+                    breaks: "9:00 AM - 5:00 PM",
+                    holidays: "Closed on major holidays"
+                },
+                dining: {
+                    mainDining: {
+                        weekdays: "7:00 AM - 9:00 PM",
+                        weekends: "9:00 AM - 8:00 PM",
+                        lateNight: "9:00 PM - 1:00 AM (Thu-Sat)"
+                    },
+                    cafes: {
+                        centralCafe: "Monday-Friday: 7:30 AM - 6:00 PM",
+                        libraryCafe: "Monday-Friday: 8:00 AM - 10:00 PM, Weekends: 10:00 AM - 8:00 PM",
+                        scienceCafe: "Monday-Friday: 8:00 AM - 4:00 PM"
+                    },
+                    foodCourt: "Monday-Sunday: 11:00 AM - 10:00 PM"
+                },
+                administrative: {
+                    registrar: "Monday-Friday: 8:00 AM - 5:00 PM",
+                    bursar: "Monday-Friday: 8:30 AM - 4:30 PM",
+                    advising: "Monday-Friday: 9:00 AM - 4:00 PM (by appointment)",
+                    financialAid: "Monday-Friday: 8:00 AM - 5:00 PM",
+                    itSupport: "Monday-Friday: 7:00 AM - 7:00 PM, Saturday: 10:00 AM - 2:00 PM"
+                }
+            },
+            facilities: {
+                academic: {
+                    "Miller Science Complex": {
+                        location: "North Campus",
+                        floors: 5,
+                        features: ["Chemistry labs", "Physics labs", "Biology labs", "Research facilities", "Lecture halls"],
+                        capacity: "2,500 students",
+                        accessibility: "Full ADA compliance",
+                        parking: "Parking Lot A (150 spaces)"
+                    },
+                    "Engineering Center": {
+                        location: "East Campus",
+                        floors: 4,
+                        features: ["Computer labs", "Maker space", "3D printing lab", "Robotics lab", "Clean room"],
+                        capacity: "1,800 students",
+                        accessibility: "Full ADA compliance",
+                        parking: "Parking Lot C (200 spaces)"
+                    },
+                    "Business School": {
+                        location: "Central Campus",
+                        floors: 3,
+                        features: ["Case study rooms", "Trading simulation lab", "Career center", "Executive conference rooms"],
+                        capacity: "1,200 students",
+                        accessibility: "Full ADA compliance",
+                        parking: "Parking Structure B (300 spaces)"
+                    },
+                    "Liberal Arts Building": {
+                        location: "West Campus",
+                        floors: 4,
+                        features: ["Classrooms", "Language labs", "Writing center", "Faculty offices"],
+                        capacity: "2,000 students",
+                        accessibility: "Full ADA compliance",
+                        parking: "Parking Lot D (100 spaces)"
+                    }
+                },
+                recreation: {
+                    "Student Recreation Center": {
+                        location: "South Campus",
+                        features: {
+                            fitness: ["Cardio equipment", "Weight training", "Group fitness studios", "Rock climbing wall"],
+                            aquatic: ["Olympic-size pool", "Diving boards", "Spa/hot tub", "Lap swimming"],
+                            courts: ["Basketball courts (6)", "Racquetball courts (4)", "Tennis courts (3)", "Volleyball courts (2)"]
+                        },
+                        hours: "Monday-Friday: 6:00 AM - 11:00 PM, Weekends: 8:00 AM - 10:00 PM",
+                        membership: "Free for students, $50/semester for staff"
+                    },
+                    "Campus Green": {
+                        location: "Central Campus",
+                        size: "15 acres",
+                        features: ["Outdoor events space", "Walking paths", "Amphitheater", "Recreation fields"],
+                        events: ["Concerts", "Festivals", "Graduation ceremonies", "Recreational activities"]
+                    }
+                },
+                support: {
+                    "Health & Wellness Center": {
+                        location: "Central Campus",
+                        services: {
+                            medical: ["Primary care", "Urgent care", "Pharmacy", "Lab services"],
+                            mental: ["Counseling", "Therapy", "Crisis intervention", "Wellness workshops"],
+                            prevention: ["Health education", "Immunizations", "Health screenings"]
+                        },
+                        hours: "Monday-Friday: 8:00 AM - 5:00 PM, Urgent care until 8:00 PM"
+                    },
+                    "Career Services Center": {
+                        location: "Business School, 2nd Floor",
+                        services: ["Job placement", "Resume review", "Interview coaching", "Career fairs", "Internship programs"],
+                        hours: "Monday-Friday: 9:00 AM - 5:00 PM"
+                    }
+                }
+            },
+            dining: {
+                locations: {
+                    "Main Dining Hall": {
+                        location: "Student Union, 1st Floor",
+                        type: "All-you-can-eat buffet",
+                        cuisine: ["American", "International", "Vegetarian", "Vegan"],
+                        features: ["Salad bar", "Grill station", "Pizza station", "Dessert bar"],
+                        dietary: "Accommodates all dietary restrictions",
+                        seating: 800,
+                        payment: ["Meal plans", "Dining dollars", "Cash", "Credit cards"]
+                    },
+                    "Central Cafe": {
+                        location: "Library, Ground Floor",
+                        type: "Grab-and-go",
+                        menu: ["Coffee", "Sandwiches", "Salads", "Pastries", "Snacks"],
+                        features: ["Starbucks partner", "Free Wi-Fi", "Study-friendly"],
+                        seating: 120,
+                        payment: ["All payment methods", "Mobile ordering"]
+                    },
+                    "Food Court": {
+                        location: "Student Union, 2nd Floor",
+                        vendors: {
+                            "Pizza Palace": "New York style pizza",
+                            "Asian Express": "Chinese and Thai cuisine",
+                            "Burger Barn": "Gourmet burgers and fries",
+                            "Healthy Eats": "Salads, wraps, smoothies",
+                            "Taco Time": "Mexican cuisine"
+                        },
+                        seating: 600,
+                        payment: "All methods accepted"
+                    }
+                },
+                mealPlans: {
+                    "Unlimited": {
+                        cost: "$2,800/semester",
+                        meals: "Unlimited dining hall access",
+                        diningDollars: "$100/semester",
+                        bestFor: "Heavy eaters, social diners"
+                    },
+                    "14 Meal Plan": {
+                        cost: "$2,400/semester",
+                        meals: "14 meals per week",
+                        diningDollars: "$200/semester",
+                        bestFor: "Average eaters"
+                    },
+                    "10 Meal Plan": {
+                        cost: "$2,000/semester",
+                        meals: "10 meals per week",
+                        diningDollars: "$300/semester",
+                        bestFor: "Light eaters, commuters"
+                    },
+                    "Commuter Plan": {
+                        cost: "$800/semester",
+                        meals: "50 meals per semester",
+                        diningDollars: "$200/semester",
+                        bestFor: "Part-time students, commuters"
+                    }
+                }
+            },
+            library: {
+                "Central Library": {
+                    floors: 6,
+                    totalSpace: "300,000 sq ft",
+                    collections: {
+                        books: "1.2 million volumes",
+                        journals: "50,000 current subscriptions",
+                        databases: "500+ online databases",
+                        archives: "University archives and special collections"
+                    },
+                    spaces: {
+                        "Silent Study Areas": {
+                            floors: [3, 4, 5],
+                            capacity: 400,
+                            features: ["Individual carrels", "Natural lighting", "No talking policy"]
+                        },
+                        "Group Study Rooms": {
+                            count: 25,
+                            capacity: "4-8 people each",
+                            features: ["Whiteboards", "Power outlets", "Reservable online"],
+                            booking: "Up to 2 weeks in advance"
+                        },
+                        "Collaborative Spaces": {
+                            floors: [1, 2],
+                            capacity: 300,
+                            features: ["Discussion allowed", "Moveable furniture", "Technology integration"]
+                        },
+                        "Computer Labs": {
+                            count: 3,
+                            computers: 150,
+                            software: ["Microsoft Office", "Adobe Creative Suite", "Statistical software", "Programming environments"]
+                        }
+                    },
+                    services: {
+                        "Research Assistance": {
+                            availability: "Walk-in or by appointment",
+                            librarians: 15,
+                            specialties: ["Subject-specific research", "Citation help", "Database training"]
+                        },
+                        "Interlibrary Loans": {
+                            processing: "3-5 business days",
+                            cost: "Free for students",
+                            scope: "Worldwide network of libraries"
+                        },
+                        "Digital Services": {
+                            features: ["Scanning", "Printing", "3D printing", "Equipment loans"],
+                            costs: "Printing: $0.10/page B&W, $0.50/page color"
+                        }
+                    }
+                },
+                "Science Library": {
+                    location: "Miller Science Complex, 2nd Floor",
+                    specialization: "Science, Technology, Engineering, Mathematics",
+                    collections: "250,000 volumes + extensive digital resources",
+                    features: ["Specialized databases", "Research consultation", "Lab notebooks"]
+                }
+            },
+            administrative: {
+                procedures: {
+                    "Course Registration": {
+                        process: [
+                            "Meet with academic advisor",
+                            "Create course schedule",
+                            "Register online through student portal",
+                            "Pay tuition and fees"
+                        ],
+                        deadlines: {
+                            fall: "July
